@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ─────────────────────────────────────────── */
+:root {
+  --bg:            #0b0f1a;
+  --surface:       #111827;
+  --surface-2:     #1a2235;
+  --border:        rgba(255,255,255,0.08);
+  --text-primary:  #f1f5f9;
+  --text-muted:    #94a3b8;
+  --accent:        #3b82f6;
+  --accent-glow:   rgba(59,130,246,0.35);
+  --cyan:          #22d3ee;
+}
+
+/* ── Base ───────────────────────────────────────────────────── */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Animated gradient orbs (pure CSS — no JS needed) ───────── */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+
+  /* Hero gradient mesh */
+  .hero-bg {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(59,130,246,0.28) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 85% 80%,  rgba(34,211,238,0.14) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 40% at 10% 90%,  rgba(99,102,241,0.14) 0%, transparent 65%),
+      #0b0f1a;
+  }
+
+  /* Glowing button */
+  .btn-glow {
+    box-shadow: 0 0 24px var(--accent-glow), 0 4px 16px rgba(0,0,0,0.4);
+    transition: box-shadow 0.25s ease, transform 0.2s ease, background-color 0.2s ease;
+  }
+  .btn-glow:hover {
+    box-shadow: 0 0 36px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.5);
+    transform: translateY(-2px);
+  }
+
+  /* Glass card */
+  .glass {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+  }
+
+  /* Subtle shimmer on cards */
+  .card-hover {
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(59,130,246,0.25);
+    border-color: rgba(59,130,246,0.3);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Animated badge pulse */
+  .badge-pulse::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: #22d3ee;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse-dot 2s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50%       { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  /* Fade-up animation */
+  .fade-up {
+    animation: fadeUp 0.7s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Floating background orbs */
+  .animate-float {
+    animation: floatSlow 14s ease-in-out infinite;
+  }
+  .animate-float-delayed {
+    animation: floatSlow 16s ease-in-out 2s infinite;
+  }
+  @keyframes floatSlow {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(30px, -40px) scale(1.1); }
+    66%      { transform: translate(-25px, 25px) scale(0.95); }
+  }
+
+  /* Stagger delays */
+  .delay-100 { animation-delay: 0.1s; }
+  .delay-200 { animation-delay: 0.2s; }
+  .delay-300 { animation-delay: 0.3s; }
+  .delay-400 { animation-delay: 0.4s; }
+  .delay-500 { animation-delay: 0.5s; }
+}
