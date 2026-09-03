@@ -195,13 +195,14 @@ export default function LectureDetailPage({ params }: LecturePageProps) {
         ) : lecture ? (
           <div className="space-y-6">
             {/* Video Player Container */}
-            <div className="glass rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-              <div className="relative w-full aspect-video bg-black">
+            <div className="glass rounded-3xl overflow-hidden border border-white/10 shadow-2xl w-full">
+              <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
                 <iframe
                   src={embedUrl}
                   title={lecture.title || "Lecture Video"}
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  className="absolute top-0 left-0 w-full h-full"
+                  style={{ border: 'none' }}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
               </div>
