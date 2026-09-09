@@ -5,16 +5,43 @@
 @tailwind utilities;
 
 /* ── Design tokens ─────────────────────────────────────────── */
-:root {
-  --bg:            #0b0f1a;
-  --surface:       #111827;
-  --surface-2:     #1a2235;
+:root,
+.dark {
+  --bg:            #0f172a;
+  --surface:       #1e293b;
+  --surface-2:     #334155;
   --border:        rgba(255,255,255,0.08);
-  --text-primary:  #f1f5f9;
+  --text-primary:  #f8fafc;
   --text-muted:    #94a3b8;
   --accent:        #3b82f6;
   --accent-glow:   rgba(59,130,246,0.35);
   --cyan:          #22d3ee;
+  --glass-bg:      rgba(255,255,255,0.04);
+  --glass-border:  rgba(255,255,255,0.08);
+  --glass-shadow:  none;
+  --hero-base:     #0f172a;
+  --hero-radial-1: rgba(59,130,246,0.28);
+  --hero-radial-2: rgba(34,211,238,0.14);
+  --hero-radial-3: rgba(99,102,241,0.14);
+}
+
+.light {
+  --bg:            #f8fafc;
+  --surface:       #ffffff;
+  --surface-2:     #f1f5f9;
+  --border:        rgba(15,23,42,0.08);
+  --text-primary:  #0f172a;
+  --text-muted:    #64748b;
+  --accent:        #2563eb;
+  --accent-glow:   rgba(37,99,235,0.2);
+  --cyan:          #0891b2;
+  --glass-bg:      #ffffff;
+  --glass-border:  rgba(15,23,42,0.08);
+  --glass-shadow:  0 10px 25px -5px rgba(15,23,42,0.05), 0 8px 10px -6px rgba(15,23,42,0.01);
+  --hero-base:     #f8fafc;
+  --hero-radial-1: rgba(59,130,246,0.18);
+  --hero-radial-2: rgba(34,211,238,0.12);
+  --hero-radial-3: rgba(99,102,241,0.10);
 }
 
 /* ── Base ───────────────────────────────────────────────────── */
@@ -27,10 +54,11 @@ html { scroll-behavior: smooth; }
 body {
   margin: 0;
   font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* ── Animated gradient orbs (pure CSS — no JS needed) ───────── */
@@ -40,27 +68,28 @@ body {
   /* Hero gradient mesh */
   .hero-bg {
     background:
-      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(59,130,246,0.28) 0%, transparent 70%),
-      radial-gradient(ellipse 60% 50% at 85% 80%,  rgba(34,211,238,0.14) 0%, transparent 65%),
-      radial-gradient(ellipse 50% 40% at 10% 90%,  rgba(99,102,241,0.14) 0%, transparent 65%),
-      #0b0f1a;
+      radial-gradient(ellipse 80% 60% at 50% -10%, var(--hero-radial-1) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 85% 80%,  var(--hero-radial-2) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 40% at 10% 90%,  var(--hero-radial-3) 0%, transparent 65%),
+      var(--hero-base);
   }
 
   /* Glowing button */
   .btn-glow {
-    box-shadow: 0 0 24px var(--accent-glow), 0 4px 16px rgba(0,0,0,0.4);
+    box-shadow: 0 0 24px var(--accent-glow), 0 4px 16px rgba(0,0,0,0.2);
     transition: box-shadow 0.25s ease, transform 0.2s ease, background-color 0.2s ease;
   }
   .btn-glow:hover {
-    box-shadow: 0 0 36px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.5);
+    box-shadow: 0 0 36px var(--accent-glow), 0 8px 24px rgba(0,0,0,0.3);
     transform: translateY(-2px);
   }
 
   /* Glass card */
   .glass {
-    background: rgba(255,255,255,0.04);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid var(--border);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
   }
 
   /* Subtle shimmer on cards */
@@ -69,7 +98,7 @@ body {
   }
   .card-hover:hover {
     transform: translateY(-4px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(59,130,246,0.25);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.15), 0 0 0 1px rgba(59,130,246,0.25);
     border-color: rgba(59,130,246,0.3);
   }
 

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { TEACHER_EMAIL } from "@/lib/constants";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 
 export default function Navbar() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
@@ -71,14 +72,14 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 bg-slate-950/80 backdrop-blur-md border-b border-white/10 text-slate-100">
+    <nav className="fixed top-0 inset-x-0 z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200/80 dark:border-white/10 text-slate-800 dark:text-slate-100 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
           <span className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-lg group-hover:scale-105 transition-transform">
             ⚛️
           </span>
-          <span className="font-extrabold text-white text-base tracking-tight">
+          <span className="font-extrabold text-slate-900 dark:text-white text-base tracking-tight">
             Sachin Physics <span className="gradient-text">Classes</span>
           </span>
         </Link>
@@ -91,8 +92,8 @@ export default function Navbar() {
                 href="/courses"
                 className={`transition-colors ${
                   pathname === "/courses"
-                    ? "text-blue-400 font-bold"
-                    : "text-slate-300 hover:text-white"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                 }`}
               >
                 Courses
@@ -102,8 +103,8 @@ export default function Navbar() {
                 href="/student/dashboard"
                 className={`transition-colors ${
                   pathname === "/student/dashboard"
-                    ? "text-blue-400 font-bold"
-                    : "text-slate-300 hover:text-white"
+                    ? "text-blue-600 dark:text-blue-400 font-bold"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                 }`}
               >
                 Student Dashboard
@@ -115,18 +116,20 @@ export default function Navbar() {
                   href="/teacher/dashboard"
                   className={`transition-colors ${
                     pathname === "/teacher/dashboard"
-                      ? "text-indigo-400 font-bold"
-                      : "text-slate-300 hover:text-white"
+                      ? "text-indigo-600 dark:text-indigo-400 font-bold"
+                      : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                   }`}
                 >
                   Teacher Dashboard
                 </Link>
               )}
 
+              <ThemeToggle />
+
               <button
                 onClick={handleLogout}
                 id="navbar-logout-btn"
-                className="px-4 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/30 font-semibold text-xs transition-all"
+                className="px-4 py-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 hover:bg-red-500/20 dark:hover:bg-red-500/30 text-red-600 dark:text-red-300 border border-red-500/30 font-semibold text-xs transition-all"
               >
                 Logout
               </button>
@@ -136,13 +139,13 @@ export default function Navbar() {
             <>
               <Link
                 href="/courses"
-                className="text-slate-300 hover:text-white transition-colors"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
               >
                 Courses
               </Link>
               <Link
                 href="/login"
-                className="text-slate-300 hover:text-white transition-colors"
+                className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
               >
                 Login
               </Link>
@@ -152,6 +155,7 @@ export default function Navbar() {
               >
                 Sign Up
               </Link>
+              <ThemeToggle />
             </>
           )}
         </div>
@@ -159,3 +163,4 @@ export default function Navbar() {
     </nav>
   );
 }
+
