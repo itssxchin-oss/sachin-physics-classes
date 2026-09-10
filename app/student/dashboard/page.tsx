@@ -341,7 +341,7 @@ export default async function StudentDashboardPage() {
               {recentLecturesList.map(({ lecture, chapterTitle }) => (
                 <Link
                   key={lecture.id}
-                  href={`/courses/${lecture.course_id || "_"}/lecture/${lecture.id}`}
+                  href={`/lecture/${lecture.id}`}
                   className="glass p-4 rounded-2xl border border-white/10 hover:border-emerald-500/40 hover:bg-white/[0.04] transition-all flex items-center justify-between gap-4 group"
                 >
                   <div className="flex items-center gap-3.5 min-w-0">

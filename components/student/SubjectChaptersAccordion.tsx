@@ -101,12 +101,11 @@ export default function SubjectChaptersAccordion({
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {chapterLectures.map((lecture) => {
                       const isCompleted = completedSet.has(lecture.id);
-                      const courseIdForLink = chapter.course_id || "_";
 
                       return (
                         <Link
                           key={lecture.id}
-                          href={`/courses/${courseIdForLink}/lecture/${lecture.id}`}
+                          href={`/lecture/${lecture.id}`}
                           className="group glass rounded-2xl border border-white/10 hover:border-blue-500/40 hover:bg-white/[0.06] transition-all duration-300 flex flex-col overflow-hidden card-hover"
                         >
                           {/* Lecture Card Thumbnail Visual Header */}
