@@ -41,7 +41,7 @@ export default async function MyBatchesPage() {
 
   return (
     <StudentSidebarLayout pageTitle="My Batches">
-      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-6xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto min-w-0">
         {/* Header */}
         <div className="mb-8">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass border border-cyan-500/30 text-cyan-400 text-xs font-semibold uppercase tracking-wider mb-3">

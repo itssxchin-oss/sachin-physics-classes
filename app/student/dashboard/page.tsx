@@ -169,7 +169,7 @@ export default async function StudentDashboardPage() {
 
   return (
     <StudentSidebarLayout pageTitle="Student Overview">
-      <div className="space-y-8 max-w-6xl mx-auto">
+      <div className="space-y-8 w-full max-w-7xl mx-auto min-w-0">
         {/* Welcome Hero Banner */}
         <div className="glass p-6 sm:p-8 rounded-3xl border border-white/10 relative overflow-hidden fade-up">
           <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-blue-600/10 to-cyan-500/10 rounded-full blur-3xl pointer-events-none" />

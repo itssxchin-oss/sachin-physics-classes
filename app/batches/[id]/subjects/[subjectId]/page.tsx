@@ -106,7 +106,7 @@ export default async function SubjectDetailPage({ params }: SubjectDetailPagePro
 
   return (
     <StudentSidebarLayout pageTitle={subject.title} backHref={`/batches/${batchId}`}>
-      <div className="space-y-6 max-w-6xl mx-auto">
+      <div className="space-y-6 w-full max-w-7xl mx-auto min-w-0">
         {/* Breadcrumb Header */}
         <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-400 overflow-x-auto pb-1">
           <Link href="/student/my-batches" className="hover:text-blue-400 transition-colors whitespace-nowrap">

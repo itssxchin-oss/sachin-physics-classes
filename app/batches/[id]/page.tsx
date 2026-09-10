@@ -100,7 +100,7 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
 
   return (
     <StudentSidebarLayout pageTitle={batch.title} backHref="/batches">
-      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-6xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto min-w-0 space-y-8">
         {/* Batch Hero */}
         <div className="glass rounded-2xl border border-white/10 overflow-hidden mb-8">
           <div className="flex flex-col sm:flex-row gap-0">
