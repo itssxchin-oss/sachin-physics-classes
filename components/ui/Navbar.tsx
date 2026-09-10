@@ -89,20 +89,20 @@ export default function Navbar() {
           {!loading && isLoggedIn ? (
             <>
               <Link
-                href="/courses"
+                href="/batches"
                 className={`transition-colors ${
-                  pathname === "/courses"
+                  pathname === "/batches"
                     ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                 }`}
               >
-                Courses
+                Batches
               </Link>
 
               <Link
-                href="/student/dashboard"
+                href="/student/my-batches"
                 className={`transition-colors ${
-                  pathname === "/student/dashboard"
+                  pathname === "/student/my-batches"
                     ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                 }`}
@@ -138,10 +138,10 @@ export default function Navbar() {
             /* Unauthenticated Public Navigation */
             <>
               <Link
-                href="/courses"
+                href="/batches"
                 className="text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
               >
-                Courses
+                Batches
               </Link>
               <Link
                 href="/login"

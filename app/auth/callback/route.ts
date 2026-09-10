@@ -21,7 +21,7 @@ export async function GET(request: Request) {
         if (user.email === TEACHER_EMAIL) {
           return NextResponse.redirect(`${origin}/teacher/dashboard`);
         } else {
-          return NextResponse.redirect(`${origin}/courses`);
+          return NextResponse.redirect(`${origin}/student/my-batches`);
         }
       }
     }
