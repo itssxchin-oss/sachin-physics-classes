@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
+import TeacherBatchAccordion from "@/components/teacher/TeacherBatchAccordion";
 import TeacherCourseAccordion from "@/components/teacher/TeacherCourseAccordion";
 import { createClient } from "@/lib/supabase/server";
 import { TEACHER_EMAIL } from "@/lib/constants";
@@ -27,8 +28,13 @@ export default async function TeacherDashboardPage({
 
   // 3. Fetch metrics & hierarchy data from Supabase
   let totalStudentsCount = 0;
+  let totalBatchesCount = 0;
+  let totalSubjectsCount = 0;
   let totalCoursesCount = 0;
   let totalLecturesCount = 0;
+
+  let batchesList: any[] = [];
+  let subjectsList: any[] = [];
   let coursesList: any[] = [];
   let chaptersList: any[] = [];
   let lecturesList: any[] = [];
@@ -42,6 +48,32 @@ export default async function TeacherDashboardPage({
 
     if (studentCount !== null && studentCount !== undefined) {
       totalStudentsCount = studentCount;
+    }
+
+    // Fetch batches
+    const { count: batchCount, data: batchesData } = await supabase
+      .from("batches")
+      .select("*", { count: "exact" })
+      .order("created_at", { ascending: false });
+
+    if (batchCount !== null && batchCount !== undefined) {
+      totalBatchesCount = batchCount;
+    }
+    if (batchesData) {
+      batchesList = batchesData;
+    }
+
+    // Fetch subjects
+    const { count: subjectCount, data: subjectsData } = await supabase
+      .from("subjects")
+      .select("*", { count: "exact" })
+      .order("order_number", { ascending: true });
+
+    if (subjectCount !== null && subjectCount !== undefined) {
+      totalSubjectsCount = subjectCount;
+    }
+    if (subjectsData) {
+      subjectsList = subjectsData;
     }
 
     // Fetch courses
@@ -84,21 +116,29 @@ export default async function TeacherDashboardPage({
   }
 
   const successMessage =
-    searchParams.success === "chapter-created"
-      ? "Chapter created successfully."
-      : searchParams.success === "course-created"
-        ? "Course created successfully."
-        : searchParams.success === "lecture-created"
-          ? "Lecture created successfully."
-          : searchParams.updated === "chapter"
-            ? "Chapter updated successfully."
-            : searchParams.updated === "lecture"
-              ? "Lecture updated successfully."
-              : searchParams.updated === "1"
-                ? "Course updated successfully."
-                : searchParams.deleted === "1"
-                  ? "Course deleted successfully."
-                  : null;
+    searchParams.success === "batch-created"
+      ? "Batch created successfully."
+      : searchParams.success === "subject-created"
+        ? "Subject created successfully."
+        : searchParams.success === "chapter-created"
+          ? "Chapter created successfully."
+          : searchParams.success === "course-created"
+            ? "Course created successfully."
+            : searchParams.success === "lecture-created"
+              ? "Lecture created successfully."
+              : searchParams.updated === "batch"
+                ? "Batch updated successfully."
+                : searchParams.updated === "subject"
+                  ? "Subject updated successfully."
+                  : searchParams.updated === "chapter"
+                    ? "Chapter updated successfully."
+                    : searchParams.updated === "lecture"
+                      ? "Lecture updated successfully."
+                      : searchParams.updated === "1"
+                        ? "Course updated successfully."
+                        : searchParams.deleted === "1"
+                          ? "Course deleted successfully."
+                          : null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -121,12 +161,26 @@ export default async function TeacherDashboardPage({
               Teacher <span className="gradient-text">Dashboard</span>
             </h1>
             <p className="text-slate-400 text-sm mt-1">
-              Welcome, <span className="text-white font-semibold">{user.email}</span>. Manage your physics courses, chapters, and lectures.
+              Welcome, <span className="text-white font-semibold">{user.email}</span>. Manage your batches, subjects, chapters, and lectures.
             </p>
           </div>
 
           {/* Quick Action Buttons */}
           <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/teacher/batches/new"
+              id="add-batch-btn"
+              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm btn-glow transition-all flex items-center gap-1.5"
+            >
+              <span className="text-base">📦</span> Add New Batch
+            </Link>
+            <Link
+              href="/teacher/subjects/new"
+              id="add-subject-btn"
+              className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm btn-glow transition-all flex items-center gap-1.5"
+            >
+              <span className="text-base">📘</span> Add New Subject
+            </Link>
             <Link
               href="/teacher/courses/new"
               id="add-course-btn"
@@ -152,51 +206,67 @@ export default async function TeacherDashboardPage({
         </div>
 
         {/* Key Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
           {/* Metric 1: Total Students */}
           <div className="glass p-6 rounded-2xl border border-white/10 flex items-center justify-between card-hover">
             <div>
               <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
                 Total Students
               </p>
-              <h2 className="text-4xl font-black text-white mt-1">
+              <h2 className="text-3xl font-black text-white mt-1">
                 {totalStudentsCount}
               </h2>
               <p className="text-xs text-emerald-400 mt-1 font-medium">Enrolled learners</p>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-2xl font-bold">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl font-bold">
               👨‍🎓
             </div>
           </div>
 
-          {/* Metric 2: Total Courses */}
+          {/* Metric 2: Total Batches */}
           <div className="glass p-6 rounded-2xl border border-white/10 flex items-center justify-between card-hover">
             <div>
               <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                Total Courses
+                Total Batches
               </p>
-              <h2 className="text-4xl font-black text-white mt-1">
-                {totalCoursesCount}
+              <h2 className="text-3xl font-black text-white mt-1">
+                {totalBatchesCount}
               </h2>
-              <p className="text-xs text-blue-400 mt-1 font-medium">Physics modules published</p>
+              <p className="text-xs text-purple-400 mt-1 font-medium">Active batches</p>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center text-2xl font-bold">
-              📚
+            <div className="w-12 h-12 rounded-2xl bg-purple-600/20 text-purple-400 border border-purple-500/30 flex items-center justify-center text-xl font-bold">
+              📦
             </div>
           </div>
 
-          {/* Metric 3: Total Lectures */}
+          {/* Metric 3: Total Subjects */}
+          <div className="glass p-6 rounded-2xl border border-white/10 flex items-center justify-between card-hover">
+            <div>
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                Total Subjects
+              </p>
+              <h2 className="text-3xl font-black text-white mt-1">
+                {totalSubjectsCount}
+              </h2>
+              <p className="text-xs text-cyan-400 mt-1 font-medium">Configured subjects</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center text-xl font-bold">
+              📘
+            </div>
+          </div>
+
+          {/* Metric 4: Total Lectures */}
           <div className="glass p-6 rounded-2xl border border-white/10 flex items-center justify-between card-hover">
             <div>
               <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
                 Total Lectures
               </p>
-              <h2 className="text-4xl font-black text-white mt-1">
+              <h2 className="text-3xl font-black text-white mt-1">
                 {totalLecturesCount}
               </h2>
-              <p className="text-xs text-indigo-400 mt-1 font-medium">Uploaded video lessons</p>
+              <p className="text-xs text-indigo-400 mt-1 font-medium">Video lessons</p>
             </div>
-            <div className="w-14 h-14 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-2xl font-bold">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center text-xl font-bold">
               📹
             </div>
           </div>
@@ -204,26 +274,38 @@ export default async function TeacherDashboardPage({
 
         {/* Management Sections Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Courses & Chapter/Lecture Hierarchy Management (Left 2 Cols) */}
+          {/* Batches / Subjects / Chapters / Lectures Hierarchy View (Left 2 Cols) */}
           <div className="lg:col-span-2 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <span>📚</span> Courses, Chapters & Lectures
+                <span>📦</span> Batches, Subjects, Chapters & Lectures
               </h2>
-              <Link
-                href="/courses"
-                className="text-xs font-semibold text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                View Public Catalogue →
-              </Link>
+              <span className="text-xs text-slate-400">
+                Batch → Subject → Chapter → Lecture Hierarchy
+              </span>
             </div>
 
-            {/* Expandable Course Accordion with Chapters and Nested Lectures */}
-            <TeacherCourseAccordion
-              courses={coursesList}
+            {/* Expandable 4-Level Batch Hierarchy View */}
+            <TeacherBatchAccordion
+              batches={batchesList}
+              subjects={subjectsList}
               chapters={chaptersList}
               lectures={lecturesList}
             />
+
+            {/* Legacy / Direct Course View if any courses exist */}
+            {coursesList.length > 0 && (
+              <div className="pt-8 border-t border-white/10 space-y-4">
+                <h3 className="text-lg font-bold text-slate-300 flex items-center gap-2">
+                  <span>📚</span> Direct Course Hierarchy
+                </h3>
+                <TeacherCourseAccordion
+                  courses={coursesList}
+                  chapters={chaptersList}
+                  lectures={lecturesList}
+                />
+              </div>
+            )}
           </div>
 
           {/* Quick Creator Control Panel (Right Col) */}
@@ -233,23 +315,36 @@ export default async function TeacherDashboardPage({
             </h2>
 
             <div className="glass p-6 rounded-2xl border border-white/10 space-y-4">
-              <div className="p-4 rounded-xl bg-blue-600/10 border border-blue-500/20">
-                <h4 className="font-bold text-white text-sm mb-1">Create New Physics Course</h4>
+              <div className="p-4 rounded-xl bg-purple-600/10 border border-purple-500/20">
+                <h4 className="font-bold text-white text-sm mb-1">Create New Batch</h4>
                 <p className="text-xs text-slate-400 mb-3">
-                  Add a new course title, description, and thumbnail to your student catalogue.
+                  Add a new batch (e.g. Class 10th Batch) to organize subjects and chapters.
                 </p>
                 <Link
-                  href="/teacher/courses/new"
-                  className="inline-block w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-center font-bold text-xs rounded-xl transition-all"
+                  href="/teacher/batches/new"
+                  className="inline-block w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white text-center font-bold text-xs rounded-xl transition-all"
                 >
-                  ＋ Launch Course Creator
+                  📦 Launch Batch Creator
+                </Link>
+              </div>
+
+              <div className="p-4 rounded-xl bg-cyan-600/10 border border-cyan-500/20">
+                <h4 className="font-bold text-white text-sm mb-1">Create New Subject</h4>
+                <p className="text-xs text-slate-400 mb-3">
+                  Add a new subject (e.g. Physics) inside an existing batch.
+                </p>
+                <Link
+                  href="/teacher/subjects/new"
+                  className="inline-block w-full py-2.5 px-4 bg-cyan-600 hover:bg-cyan-500 text-white text-center font-bold text-xs rounded-xl transition-all"
+                >
+                  📘 Launch Subject Creator
                 </Link>
               </div>
 
               <div className="p-4 rounded-xl bg-emerald-600/10 border border-emerald-500/20">
                 <h4 className="font-bold text-white text-sm mb-1">Create New Chapter</h4>
                 <p className="text-xs text-slate-400 mb-3">
-                  Add a new chapter to group lectures inside a physics course.
+                  Add a chapter to group lectures inside a specific subject.
                 </p>
                 <Link
                   href="/teacher/chapters/new"
@@ -262,13 +357,26 @@ export default async function TeacherDashboardPage({
               <div className="p-4 rounded-xl bg-indigo-600/10 border border-indigo-500/20">
                 <h4 className="font-bold text-white text-sm mb-1">Upload New Lecture Video</h4>
                 <p className="text-xs text-slate-400 mb-3">
-                  Add a YouTube video lesson link to a specific course & chapter.
+                  Add a YouTube video lesson link to a specific chapter.
                 </p>
                 <Link
                   href="/teacher/lectures/new"
                   className="inline-block w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white text-center font-bold text-xs rounded-xl transition-all"
                 >
                   📹 Upload Lecture Video
+                </Link>
+              </div>
+
+              <div className="p-4 rounded-xl bg-blue-600/10 border border-blue-500/20">
+                <h4 className="font-bold text-white text-sm mb-1">Create New Course</h4>
+                <p className="text-xs text-slate-400 mb-3">
+                  Add a standalone course title, description, and thumbnail.
+                </p>
+                <Link
+                  href="/teacher/courses/new"
+                  className="inline-block w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-center font-bold text-xs rounded-xl transition-all"
+                >
+                  ＋ Launch Course Creator
                 </Link>
               </div>
             </div>

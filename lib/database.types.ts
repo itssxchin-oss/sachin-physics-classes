@@ -73,6 +73,33 @@ export interface Progress {
 }
 
 
+export interface Batch {
+  id: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  price: number;
+  teacher_id: string | null;
+  created_at: string;
+}
+
+export interface Subject {
+  id: string;
+  batch_id: string;
+  title: string;
+  description: string | null;
+  order_number: number;
+  created_at: string;
+}
+
+export interface BatchEnrollment {
+  id: string;
+  student_id: string;
+  batch_id: string;
+  enrolled_at: string;
+}
+
+
 // ── Insert / Update types (omit auto-generated fields) ───────
 
 export type ProfileInsert = Omit<Profile, "created_at">;
@@ -137,6 +164,24 @@ export interface Database {
         Update: CourseUpdate;
         Relationships: [];
       };
+      batches: {
+        Row:    Batch;
+        Insert: Omit<Batch, "id" | "created_at">;
+        Update: Partial<Omit<Batch, "id" | "created_at">>;
+        Relationships: [];
+      };
+      subjects: {
+        Row:    Subject;
+        Insert: Omit<Subject, "id" | "created_at">;
+        Update: Partial<Omit<Subject, "id" | "created_at">>;
+        Relationships: [];
+      };
+      batch_enrollments: {
+        Row:    BatchEnrollment;
+        Insert: Omit<BatchEnrollment, "id" | "enrolled_at">;
+        Update: Partial<Omit<BatchEnrollment, "id" | "enrolled_at">>;
+        Relationships: [];
+      };
       lectures: {
         Row:    Lecture;
         Insert: LectureInsert;
@@ -185,3 +230,4 @@ export interface Database {
     };
   };
 }
+
