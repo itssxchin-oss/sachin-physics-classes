@@ -100,9 +100,9 @@ export default function Navbar() {
               </Link>
 
               <Link
-                href="/student/my-batches"
+                href="/student/dashboard"
                 className={`transition-colors ${
-                  pathname === "/student/my-batches"
+                  pathname === "/student/dashboard"
                     ? "text-blue-600 dark:text-blue-400 font-bold"
                     : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"
                 }`}

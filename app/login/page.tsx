@@ -27,14 +27,14 @@ export default function LoginPage() {
     const profile = data as Profile | null;
 
     if (error || !profile) {
-      router.push("/student/my-batches");
+      router.push("/student/dashboard");
       return;
     }
 
     if (profile.role === "teacher") {
       router.push("/teacher/dashboard");
     } else {
-      router.push("/student/my-batches");
+      router.push("/student/dashboard");
     }
   };
 
