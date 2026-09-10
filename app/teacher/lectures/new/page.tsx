@@ -8,12 +8,13 @@ import { createClient } from "@/lib/supabase/client";
 import { TEACHER_EMAIL } from "@/lib/constants";
 
 export default function NewLecturePage() {
-  const [courses, setCourses] = useState<any[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState("");
+  const [batches, setBatches] = useState<{ id: string; title: string }[]>([]);
+  const [subjects, setSubjects] = useState<{ id: string; batch_id: string; title: string }[]>([]);
+  const [chapters, setChapters] = useState<{ id: string; subject_id: string | null; title: string; order_number: number }[]>([]);
 
-  const [chapters, setChapters] = useState<any[]>([]);
+  const [selectedBatchId, setSelectedBatchId] = useState("");
+  const [selectedSubjectId, setSelectedSubjectId] = useState("");
   const [selectedChapterId, setSelectedChapterId] = useState("");
-  const [chaptersLoading, setChaptersLoading] = useState(false);
 
   const [title, setTitle] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
@@ -21,43 +22,80 @@ export default function NewLecturePage() {
   const [orderNumber, setOrderNumber] = useState<number>(1);
   const [durationMins, setDurationMins] = useState<number>(45);
 
+  const [batchesLoading, setBatchesLoading] = useState(true);
+  const [subjectsLoading, setSubjectsLoading] = useState(true);
+  const [chaptersLoading, setChaptersLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [coursesLoading, setCoursesLoading] = useState(true);
 
   const router = useRouter();
   const supabase = createClient();
 
-  // 1. Fetch courses on mount
+  // 1. Fetch batches
   useEffect(() => {
-    async function fetchCourses() {
+    async function fetchBatches() {
       try {
         const { data, error } = await supabase
-          .from("courses")
+          .from("batches")
           .select("id, title")
           .order("created_at", { ascending: false });
 
-        const courseList = (data as any[]) || [];
-
-        if (!error && courseList.length > 0) {
-          setCourses(courseList);
-          setSelectedCourseId(courseList[0].id);
+        if (!error && data && data.length > 0) {
+          setBatches(data as { id: string; title: string }[]);
+          setSelectedBatchId(data[0].id);
         }
       } catch {
+        // Handled in UI
       } finally {
-        setCoursesLoading(false);
+        setBatchesLoading(false);
       }
     }
 
-    fetchCourses();
+    fetchBatches();
   }, [supabase]);
 
-  // 2. Fetch chapters whenever selectedCourseId changes
+  // 2. Fetch all subjects
   useEffect(() => {
-    if (!selectedCourseId) {
+    async function fetchSubjects() {
+      try {
+        const { data, error } = await supabase
+          .from("subjects")
+          .select("id, batch_id, title")
+          .order("order_number", { ascending: true });
+
+        if (!error && data) {
+          setSubjects(data as { id: string; batch_id: string; title: string }[]);
+        }
+      } catch {
+        // Handled in UI
+      } finally {
+        setSubjectsLoading(false);
+      }
+    }
+
+    fetchSubjects();
+  }, [supabase]);
+
+  // Filter subjects whenever selectedBatchId changes
+  const filteredSubjects = subjects.filter((s) => s.batch_id === selectedBatchId);
+
+  useEffect(() => {
+    if (filteredSubjects.length > 0) {
+      if (!filteredSubjects.some((s) => s.id === selectedSubjectId)) {
+        setSelectedSubjectId(filteredSubjects[0].id);
+      }
+    } else {
+      setSelectedSubjectId("");
+    }
+  }, [selectedBatchId, subjects]);
+
+  // 3. Fetch chapters for selectedSubjectId
+  useEffect(() => {
+    if (!selectedSubjectId) {
       setChapters([]);
       setSelectedChapterId("");
+      setChaptersLoading(false);
       return;
     }
 
@@ -66,15 +104,13 @@ export default function NewLecturePage() {
       try {
         const { data, error } = await supabase
           .from("chapters")
-          .select("id, title, order_number")
-          .eq("course_id", selectedCourseId)
+          .select("id, subject_id, title, order_number")
+          .eq("subject_id", selectedSubjectId)
           .order("order_number", { ascending: true });
 
-        const chapterList = (data as any[]) || [];
-
-        if (!error && chapterList.length > 0) {
-          setChapters(chapterList);
-          setSelectedChapterId(chapterList[0].id);
+        if (!error && data && data.length > 0) {
+          setChapters(data as any[]);
+          setSelectedChapterId(data[0].id);
         } else {
           setChapters([]);
           setSelectedChapterId("");
@@ -88,7 +124,7 @@ export default function NewLecturePage() {
     }
 
     fetchChapters();
-  }, [selectedCourseId, supabase]);
+  }, [selectedSubjectId, supabase]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +133,7 @@ export default function NewLecturePage() {
     setError(null);
 
     try {
-      // Verify user is authenticated as teacher
+      // Verify teacher auth
       const { data: authData } = await supabase.auth.getUser();
       const user = authData?.user;
 
@@ -107,8 +143,14 @@ export default function NewLecturePage() {
         return;
       }
 
-      if (!selectedCourseId) {
-        setError("Please select a course.");
+      if (!selectedBatchId) {
+        setError("Please select a batch.");
+        setLoading(false);
+        return;
+      }
+
+      if (!selectedSubjectId) {
+        setError("Please select a subject. Create a subject first if none exists.");
         setLoading(false);
         return;
       }
@@ -180,7 +222,7 @@ export default function NewLecturePage() {
             </span>
             <h1 className="text-3xl font-extrabold text-white">Add New Lecture Video</h1>
             <p className="text-slate-400 text-sm mt-1">
-              Select a course and chapter, then enter video details to add a new lecture lesson.
+              Select a batch, subject, and chapter to upload a new video lecture.
             </p>
           </div>
 
@@ -197,56 +239,94 @@ export default function NewLecturePage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Step 1: Course Selection */}
+            {/* Step 1: Batch Selection */}
             <div>
               <label className="block text-sm font-medium text-slate-200 mb-2">
-                1. Select Target Course *
+                1. Select Target Batch <span className="text-red-400">*</span>
               </label>
-              {coursesLoading ? (
+              {batchesLoading ? (
                 <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400 animate-pulse">
-                  Loading courses...
+                  Loading batches...
                 </div>
-              ) : courses.length === 0 ? (
+              ) : batches.length === 0 ? (
                 <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400">
-                  No courses available.{" "}
-                  <Link href="/teacher/courses/new" className="text-blue-400 hover:underline">
-                    Create a course first
+                  No batches available.{" "}
+                  <Link href="/teacher/batches/new" className="text-purple-400 hover:underline">
+                    Create a batch first
                   </Link>
                   .
                 </div>
               ) : (
                 <select
-                  id="lecture-course-dropdown"
+                  id="lecture-batch-dropdown"
                   required
-                  value={selectedCourseId}
-                  onChange={(e) => setSelectedCourseId(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  value={selectedBatchId}
+                  onChange={(e) => setSelectedBatchId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 cursor-pointer"
                 >
-                  {courses.map((course) => (
-                    <option key={course.id} value={course.id} className="bg-slate-900">
-                      {course.title}
+                  {batches.map((batch) => (
+                    <option key={batch.id} value={batch.id} className="bg-slate-900">
+                      {batch.title}
                     </option>
                   ))}
                 </select>
               )}
             </div>
 
-            {/* Step 2: Chapter Selection */}
+            {/* Step 2: Subject Selection */}
             <div>
               <label className="block text-sm font-medium text-slate-200 mb-2">
-                2. Select Target Chapter *
+                2. Select Target Subject <span className="text-red-400">*</span>
+              </label>
+              {subjectsLoading ? (
+                <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400 animate-pulse">
+                  Loading subjects...
+                </div>
+              ) : !selectedBatchId ? (
+                <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400">
+                  Please select a batch first.
+                </div>
+              ) : filteredSubjects.length === 0 ? (
+                <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400">
+                  No subjects found in this batch.{" "}
+                  <Link href="/teacher/subjects/new" className="text-cyan-400 hover:underline">
+                    Create a subject first
+                  </Link>
+                  .
+                </div>
+              ) : (
+                <select
+                  id="lecture-subject-dropdown"
+                  required
+                  value={selectedSubjectId}
+                  onChange={(e) => setSelectedSubjectId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 cursor-pointer"
+                >
+                  {filteredSubjects.map((sub) => (
+                    <option key={sub.id} value={sub.id} className="bg-slate-900">
+                      {sub.title}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            {/* Step 3: Chapter Selection */}
+            <div>
+              <label className="block text-sm font-medium text-slate-200 mb-2">
+                3. Select Target Chapter <span className="text-red-400">*</span>
               </label>
               {chaptersLoading ? (
                 <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400 animate-pulse">
-                  Loading chapters for selected course...
+                  Loading chapters...
                 </div>
-              ) : !selectedCourseId ? (
+              ) : !selectedSubjectId ? (
                 <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400">
-                  Please select a course first.
+                  Please select a subject first.
                 </div>
               ) : chapters.length === 0 ? (
                 <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400">
-                  No chapters found for this course.{" "}
+                  No chapters found in this subject.{" "}
                   <Link href="/teacher/chapters/new" className="text-emerald-400 hover:underline">
                     Create a chapter first
                   </Link>
@@ -272,7 +352,7 @@ export default function NewLecturePage() {
             {/* Lecture Title */}
             <div>
               <label className="block text-sm font-medium text-slate-200 mb-2">
-                Lecture Title *
+                Lecture Title <span className="text-red-400">*</span>
               </label>
               <input
                 id="lecture-title-input"
@@ -288,7 +368,7 @@ export default function NewLecturePage() {
             {/* YouTube Video URL */}
             <div>
               <label className="block text-sm font-medium text-slate-200 mb-2">
-                YouTube Video URL *
+                YouTube Video URL <span className="text-red-400">*</span>
               </label>
               <input
                 id="lecture-youtube-input"
@@ -305,7 +385,7 @@ export default function NewLecturePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-2">
-                  Order Number (Position in Chapter) *
+                  Order Number (Position in Chapter) <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="lecture-order-input"
@@ -320,7 +400,7 @@ export default function NewLecturePage() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-2">
-                  Duration (minutes) *
+                  Duration (minutes) <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="lecture-duration-input"
@@ -360,7 +440,7 @@ export default function NewLecturePage() {
               <button
                 id="submit-lecture-btn"
                 type="submit"
-                disabled={loading || courses.length === 0 || chapters.length === 0}
+                disabled={loading || batches.length === 0 || filteredSubjects.length === 0 || chapters.length === 0}
                 className="px-8 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-sm btn-glow transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "Inserting..." : "Insert Lecture"}

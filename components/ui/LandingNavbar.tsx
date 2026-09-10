@@ -6,6 +6,7 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 
 const navLinks = [
   { label: "Home", href: "/" },
+  { label: "Batches", href: "/batches" },
   { label: "About Us", href: "/#about" },
   { label: "Contact Us", href: "/#contact" },
 ];

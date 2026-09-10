@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
 import TeacherBatchAccordion from "@/components/teacher/TeacherBatchAccordion";
-import TeacherCourseAccordion from "@/components/teacher/TeacherCourseAccordion";
 import { createClient } from "@/lib/supabase/server";
 import { TEACHER_EMAIL } from "@/lib/constants";
 
@@ -23,19 +22,17 @@ export default async function TeacherDashboardPage({
 
   // 2. Protection check: Only the hardcoded teacher email may access this page.
   if (user.email !== TEACHER_EMAIL) {
-    redirect("/courses");
+    redirect("/student/my-batches");
   }
 
   // 3. Fetch metrics & hierarchy data from Supabase
   let totalStudentsCount = 0;
   let totalBatchesCount = 0;
   let totalSubjectsCount = 0;
-  let totalCoursesCount = 0;
   let totalLecturesCount = 0;
 
   let batchesList: any[] = [];
   let subjectsList: any[] = [];
-  let coursesList: any[] = [];
   let chaptersList: any[] = [];
   let lecturesList: any[] = [];
 
@@ -76,19 +73,6 @@ export default async function TeacherDashboardPage({
       subjectsList = subjectsData;
     }
 
-    // Fetch courses
-    const { count: courseCount, data: coursesData } = await supabase
-      .from("courses")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false });
-
-    if (courseCount !== null && courseCount !== undefined) {
-      totalCoursesCount = courseCount;
-    }
-    if (coursesData) {
-      coursesList = coursesData;
-    }
-
     // Fetch chapters
     const { data: chaptersData } = await supabase
       .from("chapters")
@@ -122,23 +106,17 @@ export default async function TeacherDashboardPage({
         ? "Subject created successfully."
         : searchParams.success === "chapter-created"
           ? "Chapter created successfully."
-          : searchParams.success === "course-created"
-            ? "Course created successfully."
-            : searchParams.success === "lecture-created"
-              ? "Lecture created successfully."
-              : searchParams.updated === "batch"
-                ? "Batch updated successfully."
-                : searchParams.updated === "subject"
-                  ? "Subject updated successfully."
-                  : searchParams.updated === "chapter"
-                    ? "Chapter updated successfully."
-                    : searchParams.updated === "lecture"
-                      ? "Lecture updated successfully."
-                      : searchParams.updated === "1"
-                        ? "Course updated successfully."
-                        : searchParams.deleted === "1"
-                          ? "Course deleted successfully."
-                          : null;
+          : searchParams.success === "lecture-created"
+            ? "Lecture created successfully."
+            : searchParams.updated === "batch"
+              ? "Batch updated successfully."
+              : searchParams.updated === "subject"
+                ? "Subject updated successfully."
+                : searchParams.updated === "chapter"
+                  ? "Chapter updated successfully."
+                  : searchParams.updated === "lecture"
+                    ? "Lecture updated successfully."
+                    : null;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
@@ -180,13 +158,6 @@ export default async function TeacherDashboardPage({
               className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-sm btn-glow transition-all flex items-center gap-1.5"
             >
               <span className="text-base">📘</span> Add New Subject
-            </Link>
-            <Link
-              href="/teacher/courses/new"
-              id="add-course-btn"
-              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm btn-glow transition-all flex items-center gap-1.5"
-            >
-              <span className="text-base">＋</span> Add Course
             </Link>
             <Link
               href="/teacher/chapters/new"
@@ -292,20 +263,6 @@ export default async function TeacherDashboardPage({
               chapters={chaptersList}
               lectures={lecturesList}
             />
-
-            {/* Legacy / Direct Course View if any courses exist */}
-            {coursesList.length > 0 && (
-              <div className="pt-8 border-t border-white/10 space-y-4">
-                <h3 className="text-lg font-bold text-slate-300 flex items-center gap-2">
-                  <span>📚</span> Direct Course Hierarchy
-                </h3>
-                <TeacherCourseAccordion
-                  courses={coursesList}
-                  chapters={chaptersList}
-                  lectures={lecturesList}
-                />
-              </div>
-            )}
           </div>
 
           {/* Quick Creator Control Panel (Right Col) */}
@@ -364,19 +321,6 @@ export default async function TeacherDashboardPage({
                   className="inline-block w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white text-center font-bold text-xs rounded-xl transition-all"
                 >
                   📹 Upload Lecture Video
-                </Link>
-              </div>
-
-              <div className="p-4 rounded-xl bg-blue-600/10 border border-blue-500/20">
-                <h4 className="font-bold text-white text-sm mb-1">Create New Course</h4>
-                <p className="text-xs text-slate-400 mb-3">
-                  Add a standalone course title, description, and thumbnail.
-                </p>
-                <Link
-                  href="/teacher/courses/new"
-                  className="inline-block w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white text-center font-bold text-xs rounded-xl transition-all"
-                >
-                  ＋ Launch Course Creator
                 </Link>
               </div>
             </div>
