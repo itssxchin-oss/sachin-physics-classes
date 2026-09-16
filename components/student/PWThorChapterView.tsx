@@ -78,7 +78,7 @@ export default function PWThorChapterView({
     <div className="space-y-6 fade-up">
       {/* ── Top Header Title ────────────────────────────────────────── */}
       <div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
           {chapter.title}
         </h1>
         {chapter.description && (
@@ -89,11 +89,11 @@ export default function PWThorChapterView({
       </div>
 
       {/* ── PhysicsWallah (PW Thor) Style Tabs Bar ──────────────────── */}
-      <div className="inline-flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#161922] border border-white/10 overflow-x-auto max-w-full">
+      <div className="flex items-center gap-1.5 p-1.5 rounded-2xl bg-[#161922] border border-white/10 overflow-x-auto max-w-full touch-scroll" style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
         <button
           type="button"
           onClick={() => setActiveTab("lectures")}
-          className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
+          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
             activeTab === "lectures"
               ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
               : "text-slate-300 hover:text-white hover:bg-white/5"
@@ -109,7 +109,7 @@ export default function PWThorChapterView({
         <button
           type="button"
           onClick={() => setActiveTab("notes")}
-          className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
+          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
             activeTab === "notes"
               ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
               : "text-slate-300 hover:text-white hover:bg-white/5"
@@ -122,7 +122,7 @@ export default function PWThorChapterView({
         <button
           type="button"
           onClick={() => setActiveTab("dpp_quiz")}
-          className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
+          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
             activeTab === "dpp_quiz"
               ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
               : "text-slate-300 hover:text-white hover:bg-white/5"
@@ -135,7 +135,7 @@ export default function PWThorChapterView({
         <button
           type="button"
           onClick={() => setActiveTab("dpp_pdf")}
-          className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
+          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
             activeTab === "dpp_pdf"
               ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
               : "text-slate-300 hover:text-white hover:bg-white/5"
@@ -148,7 +148,7 @@ export default function PWThorChapterView({
         <button
           type="button"
           onClick={() => setActiveTab("dpp_video")}
-          className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-2 ${
+          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
             activeTab === "dpp_video"
               ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
               : "text-slate-300 hover:text-white hover:bg-white/5"
