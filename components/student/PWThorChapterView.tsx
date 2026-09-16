@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Play, Check, Clock, FileText, HelpCircle, Download, Video, Sparkles, BookOpen } from "lucide-react";
+import { Play, Check, Clock, FileText, Download, Video, Sparkles, BookOpen } from "lucide-react";
 import type { Batch, Subject, Chapter, Lecture, LectureMaterial } from "@/lib/database.types";
 
 interface PWThorChapterViewProps {
@@ -14,7 +14,7 @@ interface PWThorChapterViewProps {
   materials: LectureMaterial[];
 }
 
-type TabType = "lectures" | "notes" | "dpp_quiz" | "dpp_pdf" | "dpp_video";
+type TabType = "lectures" | "notes";
 
 export default function PWThorChapterView({
   batch,
@@ -66,13 +66,10 @@ export default function PWThorChapterView({
     return `00:${String(remainingMins).padStart(2, "0")}:00`;
   };
 
-  // Filter materials by tab
+  // Filter materials for notes tab
   const notesMaterials = materials.filter(
     (m) => m.file_type === "notes" || m.file_type === "pdf"
   );
-  const dppPdfMaterials = materials.filter((m) => m.file_type === "dpp_pdf");
-  const dppVideoMaterials = materials.filter((m) => m.file_type === "dpp_video");
-  const dppQuizMaterials = materials.filter((m) => m.file_type === "dpp_quiz");
 
   return (
     <div className="space-y-6 fade-up">
@@ -117,45 +114,6 @@ export default function PWThorChapterView({
         >
           <FileText className="w-4 h-4" />
           <span>Notes</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("dpp_quiz")}
-          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
-            activeTab === "dpp_quiz"
-              ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
-              : "text-slate-300 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <HelpCircle className="w-4 h-4" />
-          <span>DPP Quiz</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("dpp_pdf")}
-          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
-            activeTab === "dpp_pdf"
-              ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
-              : "text-slate-300 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <FileText className="w-4 h-4" />
-          <span>DPP PDF</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab("dpp_video")}
-          className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 whitespace-nowrap flex items-center gap-1.5 sm:gap-2 ${
-            activeTab === "dpp_video"
-              ? "bg-blue-600 text-white shadow-lg shadow-blue-900/50"
-              : "text-slate-300 hover:text-white hover:bg-white/5"
-          }`}
-        >
-          <Video className="w-4 h-4" />
-          <span>DPP Video</span>
         </button>
       </div>
 
@@ -307,129 +265,6 @@ export default function PWThorChapterView({
               <FileText className="w-12 h-12 text-slate-500 mx-auto mb-3" />
               <h4 className="text-lg font-bold text-white mb-1">No Notes Uploaded</h4>
               <p className="text-slate-400 text-xs">PDF notes for this chapter will appear here.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab Content: DPP QUIZ ──────────────────────────────────── */}
-      {activeTab === "dpp_quiz" && (
-        <div className="space-y-4">
-          {dppQuizMaterials.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {dppQuizMaterials.map((m) => (
-                <div
-                  key={m.id}
-                  className="glass p-5 rounded-2xl border border-white/10 flex items-center justify-between gap-4 hover:border-emerald-500/40 transition-all"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 flex-shrink-0">
-                      <HelpCircle className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-white text-sm truncate">{m.title}</h4>
-                      <p className="text-slate-400 text-xs">Interactive DPP Quiz</p>
-                    </div>
-                  </div>
-
-                  <a
-                    href={m.file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0"
-                  >
-                    Start Quiz
-                  </a>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 glass rounded-3xl border border-white/10">
-              <HelpCircle className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-              <h4 className="text-lg font-bold text-white mb-1">No DPP Quizzes Yet</h4>
-              <p className="text-slate-400 text-xs">Interactive DPP quizzes for this chapter will appear here.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab Content: DPP PDF ───────────────────────────────────── */}
-      {activeTab === "dpp_pdf" && (
-        <div className="space-y-4">
-          {dppPdfMaterials.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {dppPdfMaterials.map((m) => (
-                <div
-                  key={m.id}
-                  className="glass p-5 rounded-2xl border border-white/10 flex items-center justify-between gap-4 hover:border-cyan-500/40 transition-all"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 flex-shrink-0">
-                      <FileText className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-white text-sm truncate">{m.title}</h4>
-                      <p className="text-slate-400 text-xs">DPP Problem Sheet PDF</p>
-                    </div>
-                  </div>
-
-                  <a
-                    href={m.file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0"
-                  >
-                    <Download className="w-4 h-4" /> Download
-                  </a>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 glass rounded-3xl border border-white/10">
-              <FileText className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-              <h4 className="text-lg font-bold text-white mb-1">No DPP PDFs Uploaded</h4>
-              <p className="text-slate-400 text-xs">Daily Practice Problem (DPP) PDFs will appear here.</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab Content: DPP VIDEO ─────────────────────────────────── */}
-      {activeTab === "dpp_video" && (
-        <div className="space-y-4">
-          {dppVideoMaterials.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {dppVideoMaterials.map((m) => (
-                <div
-                  key={m.id}
-                  className="glass p-5 rounded-2xl border border-white/10 flex items-center justify-between gap-4 hover:border-indigo-500/40 transition-all"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 flex-shrink-0">
-                      <Video className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-white text-sm truncate">{m.title}</h4>
-                      <p className="text-slate-400 text-xs">DPP Solution Video</p>
-                    </div>
-                  </div>
-
-                  <a
-                    href={m.file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0"
-                  >
-                    <Play className="w-4 h-4 fill-white" /> Watch Solution
-                  </a>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16 glass rounded-3xl border border-white/10">
-              <Video className="w-12 h-12 text-slate-500 mx-auto mb-3" />
-              <h4 className="text-lg font-bold text-white mb-1">No DPP Solution Videos Yet</h4>
-              <p className="text-slate-400 text-xs">Video solutions for DPPs will appear here.</p>
             </div>
           )}
         </div>
