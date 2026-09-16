@@ -5,12 +5,14 @@
  * - /student/* : Only accessible to logged-in users
  * - /teacher/* : Only accessible to logged-in users
  *
- * Role / email checks are intentionally handled at the page level,
- * not here. Middleware only enforces authentication.
+ * Redirects:
+ * - Unauthenticated users visiting protected routes -> /login
+ * - Already authenticated users visiting /login or /signup -> Dashboard
  */
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/database.types";
+import { TEACHER_EMAIL } from "@/lib/constants";
 
 function getValidatedSupabaseCredentials() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -30,12 +32,7 @@ function getValidatedSupabaseCredentials() {
 }
 
 export async function updateSession(request: NextRequest) {
-  // Start with a base response that forwards the request.
-  // IMPORTANT: This single object is mutated by setAll below; do NOT
-  // reassign it inside the cookie callbacks or the written cookies will
-  // be lost on the next iteration.
   let supabaseResponse = NextResponse.next({ request });
-
   const { supabaseUrl, supabaseAnonKey } = getValidatedSupabaseCredentials();
 
   try {
@@ -48,17 +45,10 @@ export async function updateSession(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
-            // 1. Write cookies onto the forwarded request so downstream
-            //    Server Components see them in the same request cycle.
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             );
-            // 2. Re-create the response with the mutated request so the
-            //    updated cookies are included in its cookie jar.
             supabaseResponse = NextResponse.next({ request });
-            // 3. Also write them explicitly onto the response so the
-            //    browser receives Set-Cookie headers and persists the
-            //    refreshed session.
             cookiesToSet.forEach(({ name, value, options }) =>
               supabaseResponse.cookies.set(name, value, options)
             );
@@ -67,9 +57,7 @@ export async function updateSession(request: NextRequest) {
       }
     );
 
-    // IMPORTANT: always call getUser() (not getSession()) so that the JWT
-    // is validated server-side and the session cookie is refreshed on
-    // every request, preventing premature expiry.
+    // Refresh auth session & validate user
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -79,11 +67,22 @@ export async function updateSession(request: NextRequest) {
     const isProtectedRoute =
       pathname.startsWith("/student") || pathname.startsWith("/teacher");
 
-    // If no logged-in user and route is protected, redirect to /login.
+    const isAuthRoute =
+      pathname === "/login" || pathname === "/signup";
+
+    // 1. If unauthenticated and accessing a protected route -> redirect to /login
     if (!user && isProtectedRoute) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = "/login";
       return NextResponse.redirect(loginUrl);
+    }
+
+    // 2. If authenticated and accessing login/signup -> redirect to appropriate dashboard
+    if (user && isAuthRoute) {
+      const dashboardUrl = request.nextUrl.clone();
+      dashboardUrl.pathname =
+        user.email === TEACHER_EMAIL ? "/teacher/dashboard" : "/student/dashboard";
+      return NextResponse.redirect(dashboardUrl);
     }
   } catch (err) {
     console.warn("Supabase middleware auth check warning:", err);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [initialChecking, setInitialChecking] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const router = useRouter();
@@ -37,6 +38,23 @@ export default function LoginPage() {
       router.push("/student/dashboard");
     }
   };
+
+  useEffect(() => {
+    async function checkExistingSession() {
+      try {
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData?.user) {
+          await handleRoleRedirect(authData.user.id);
+          return;
+        }
+      } catch {
+        // Not logged in or error checking session
+      } finally {
+        setInitialChecking(false);
+      }
+    }
+    checkExistingSession();
+  }, [supabase]);
 
   const handleGoogleSignIn = async () => {
     setErrorMsg(null);
@@ -69,11 +87,6 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // router.refresh() is synchronous-fire (returns void), so we give
-        // Next.js a short window to propagate the refreshed session cookie
-        // to the server before we hit a protected route.  Without this
-        // pause the middleware may still see the old unauthenticated cookie
-        // on the very first navigation and fall back to /login.
         router.refresh();
         await new Promise((resolve) => setTimeout(resolve, 200));
         await handleRoleRedirect(data.user.id);
@@ -84,6 +97,17 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  if (initialChecking) {
+    return (
+      <div className="min-h-screen hero-bg flex items-center justify-center p-4">
+        <div className="text-white flex items-center gap-3 font-semibold text-lg">
+          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <span>Checking session...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen hero-bg flex items-center justify-center p-4">
