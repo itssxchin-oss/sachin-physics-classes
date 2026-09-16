@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Lecture, Progress } from "@/lib/database.types";
 import {
@@ -42,7 +41,6 @@ function getYouTubeEmbedUrl(url: string | null | undefined): string {
 
 export default function LecturePage({ params }: LecturePageProps) {
   const { lectureId } = params;
-  const router = useRouter();
 
   const [lecture, setLecture] = useState<Lecture | null>(null);
   const [chapterTitle, setChapterTitle] = useState<string | null>(null);
@@ -62,7 +60,6 @@ export default function LecturePage({ params }: LecturePageProps) {
   useEffect(() => {
     async function loadData() {
       setLoading(true);
-      setMaterialsLoading(true);
 
       try {
         // 1. Auth
