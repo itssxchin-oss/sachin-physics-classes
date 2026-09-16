@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronDown, ChevronUp, Play, CheckCircle2, Video, Clock, BookOpen } from "lucide-react";
+import { ChevronDown, ChevronUp, Play, CheckCircle2, Video, Clock, BookOpen, ExternalLink, ArrowRight } from "lucide-react";
 import type { Chapter, Lecture } from "@/lib/database.types";
 
 interface SubjectChaptersAccordionProps {
   batchId: string;
   subjectTitle: string;
+  subjectId?: string;
   chapters: Chapter[];
   lectures: Lecture[];
   completedLectureIds: string[];
@@ -57,19 +58,19 @@ export default function SubjectChaptersAccordion({
       {chapters.map((chapter, index) => {
         const isExpanded = !!expandedChapterIds[chapter.id];
         const chapterLectures = lectures.filter((l) => l.chapter_id === chapter.id);
+        const chapterSubjectId = chapter.subject_id;
 
         return (
           <div
             key={chapter.id}
             className="glass rounded-2xl border border-white/10 overflow-hidden transition-all duration-300 hover:border-blue-500/30"
           >
-            {/* Chapter Header */}
-            <button
-              type="button"
-              onClick={() => toggleChapter(chapter.id)}
-              className="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 bg-white/[0.02] hover:bg-white/[0.05] transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-4 flex-1">
+            {/* Chapter Header Bar */}
+            <div className="p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white/[0.02]">
+              <div
+                onClick={() => toggleChapter(chapter.id)}
+                className="flex items-center gap-4 flex-1 cursor-pointer min-w-0"
+              >
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600/20 to-cyan-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400 font-extrabold text-sm flex-shrink-0 shadow-inner">
                   Ch {chapter.order_number || index + 1}
                 </div>
@@ -87,12 +88,27 @@ export default function SubjectChaptersAccordion({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <div className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+              <div className="flex items-center gap-3 flex-shrink-0 w-full sm:w-auto justify-between sm:justify-end border-t sm:border-t-0 pt-3 sm:pt-0 border-white/5">
+                {/* Link to Dedicated PW Thor Chapter Page */}
+                {chapterSubjectId && (
+                  <Link
+                    href={`/batches/${batchId}/subjects/${chapterSubjectId}/chapters/${chapter.id}`}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600 text-blue-300 hover:text-white border border-blue-500/30 font-bold text-xs flex items-center gap-1.5 transition-all shadow-sm"
+                  >
+                    <span>Open Chapter Page</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => toggleChapter(chapter.id)}
+                  className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                >
                   {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                </div>
+                </button>
               </div>
-            </button>
+            </div>
 
             {/* Chapter Body (Expanded) */}
             {isExpanded && (
@@ -110,10 +126,20 @@ export default function SubjectChaptersAccordion({
                         >
                           {/* Lecture Card Thumbnail Visual Header */}
                           <div className="relative aspect-video w-full bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950/40 flex items-center justify-center overflow-hidden border-b border-white/10 group-hover:scale-[1.02] transition-transform duration-300">
-                            {/* Background subtle glow & pattern */}
-                            <div className="absolute inset-0 bg-blue-600/10 group-hover:bg-blue-600/20 transition-colors" />
-                            <div className="absolute -top-12 -right-12 w-28 h-28 bg-blue-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform" />
-                            
+                            {lecture.thumbnail_url ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img
+                                src={lecture.thumbnail_url}
+                                alt={lecture.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <>
+                                <div className="absolute inset-0 bg-blue-600/10 group-hover:bg-blue-600/20 transition-colors" />
+                                <div className="absolute -top-12 -right-12 w-28 h-28 bg-blue-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform" />
+                              </>
+                            )}
+
                             {/* Central Play Badge */}
                             <div className="relative w-12 h-12 rounded-full bg-blue-600/80 group-hover:bg-blue-500 group-hover:scale-110 text-white flex items-center justify-center transition-all duration-300 shadow-lg shadow-blue-950/50 border border-white/20">
                               {isCompleted ? (

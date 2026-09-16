@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
+import ImageUploadInput from "@/components/ui/ImageUploadInput";
 import { createClient } from "@/lib/supabase/client";
 import { TEACHER_EMAIL } from "@/lib/constants";
 
@@ -137,20 +138,15 @@ export default function NewBatchPage() {
               />
             </div>
 
-            {/* Thumbnail URL */}
-            <div>
-              <label htmlFor="batch-thumbnail-url" className="block text-sm font-medium text-slate-200 mb-2">
-                Thumbnail URL <span className="text-slate-500 font-normal">(optional)</span>
-              </label>
-              <input
-                id="batch-thumbnail-url"
-                type="url"
-                value={thumbnailUrl}
-                onChange={(e) => setThumbnailUrl(e.target.value)}
-                placeholder="https://example.com/batch-thumbnail.jpg"
-                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
+            {/* Batch Thumbnail Image Upload */}
+            <ImageUploadInput
+              label="Batch Banner / Thumbnail"
+              value={thumbnailUrl}
+              onChange={setThumbnailUrl}
+              placeholder="https://example.com/batch-banner.jpg"
+              helperText="Upload a banner image for this batch or paste an image URL."
+              folder="batch-thumbnails"
+            />
 
             {/* Price */}
             <div>

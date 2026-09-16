@@ -41,9 +41,11 @@ export interface Lecture {
   youtube_url: string;
   order_number: number;
   duration_mins: number | null;
+  thumbnail_url: string | null;
   created_at: string;
   updated_at: string;
 }
+
 
 export interface Enrollment {
   id: string;

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
+import ImageUploadInput from "@/components/ui/ImageUploadInput";
 import { createClient } from "@/lib/supabase/client";
 import { TEACHER_EMAIL } from "@/lib/constants";
 
@@ -18,6 +19,7 @@ export default function NewLecturePage() {
 
   const [title, setTitle] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [description, setDescription] = useState("");
   const [orderNumber, setOrderNumber] = useState<number>(1);
   const [durationMins, setDurationMins] = useState<number>(45);
@@ -180,6 +182,7 @@ export default function NewLecturePage() {
           chapter_id: selectedChapterId,
           title: title.trim(),
           youtube_url: youtubeUrl.trim(),
+          thumbnail_url: thumbnailUrl.trim() || null,
           description: description.trim(),
           order_number: Number(orderNumber),
           duration_mins: Number(durationMins),
@@ -360,10 +363,20 @@ export default function NewLecturePage() {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Free Body Diagrams & Friction Problems"
+                placeholder="e.g. Structure of Atom 17 : Filling of Atomic Orbitals"
                 className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+
+            {/* Lecture Thumbnail Upload */}
+            <ImageUploadInput
+              label="Lecture Custom Thumbnail Image"
+              value={thumbnailUrl}
+              onChange={setThumbnailUrl}
+              placeholder="https://example.com/lecture-thumbnail.jpg"
+              helperText="Upload a custom thumbnail for this lecture. If left empty, YouTube auto-thumbnail will be used."
+              folder="lecture-thumbnails"
+            />
 
             {/* YouTube Video URL */}
             <div>

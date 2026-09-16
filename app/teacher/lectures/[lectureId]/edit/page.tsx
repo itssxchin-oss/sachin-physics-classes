@@ -4,19 +4,19 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/components/ui/Navbar";
+import ImageUploadInput from "@/components/ui/ImageUploadInput";
 import { createClient } from "@/lib/supabase/client";
 import { TEACHER_EMAIL } from "@/lib/constants";
 
 export default function EditLecturePage() {
   const { lectureId } = useParams<{ lectureId: string }>();
 
-  const [courses, setCourses] = useState<{ id: string; title: string }[]>([]);
-  const [coursesLoading, setCoursesLoading] = useState(true);
-  const [courseId, setCourseId] = useState("");
   const [title, setTitle] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState("");
   const [description, setDescription] = useState("");
   const [orderNumber, setOrderNumber] = useState<number>(1);
+  const [durationMins, setDurationMins] = useState<number>(45);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,17 +43,7 @@ export default function EditLecturePage() {
           return;
         }
 
-        // 2. Fetch the list of courses for the dropdown.
-        const { data: courseList, error: coursesError } = await supabase
-          .from("courses")
-          .select("id, title")
-          .order("created_at", { ascending: false });
-
-        if (!coursesError && courseList) {
-          if (!cancelled) setCourses(courseList as { id: string; title: string }[]);
-        }
-
-        // 3. Fetch the existing lecture.
+        // 2. Fetch the existing lecture.
         const { data: lecture, error: fetchError } = await supabase
           .from("lectures")
           .select("*")
@@ -66,11 +56,12 @@ export default function EditLecturePage() {
         }
 
         if (!cancelled) {
-          setCourseId(lecture.course_id || "");
           setTitle(lecture.title || "");
           setYoutubeUrl(lecture.youtube_url || "");
+          setThumbnailUrl((lecture as any).thumbnail_url || "");
           setDescription(lecture.description || "");
           setOrderNumber(lecture.order_number ?? 1);
+          setDurationMins(lecture.duration_mins ?? 45);
         }
       } catch (err: unknown) {
         if (!cancelled)
@@ -78,7 +69,6 @@ export default function EditLecturePage() {
       } finally {
         if (!cancelled) {
           setLoading(false);
-          setCoursesLoading(false);
         }
       }
     }
@@ -106,8 +96,8 @@ export default function EditLecturePage() {
         return;
       }
 
-      if (!courseId) {
-        setError("Please select a course.");
+      if (!title.trim()) {
+        setError("Lecture title is required.");
         setSaving(false);
         return;
       }
@@ -118,15 +108,16 @@ export default function EditLecturePage() {
         return;
       }
 
-      // UPDATE the existing row — not an insert.
+      // UPDATE the existing row
       const { error: updateError } = await supabase
         .from("lectures")
         .update({
-          course_id: courseId,
           title: title.trim(),
           youtube_url: youtubeUrl.trim(),
+          thumbnail_url: thumbnailUrl.trim() || null,
           description: description.trim(),
           order_number: Number(orderNumber),
+          duration_mins: Number(durationMins),
         })
         .eq("id", lectureId);
 
@@ -165,7 +156,7 @@ export default function EditLecturePage() {
             </span>
             <h1 className="text-3xl font-extrabold text-white">Edit Lecture</h1>
             <p className="text-slate-400 text-sm mt-1">
-              Update the course, title, video URL, description, and order for this lecture.
+              Update the title, thumbnail, video URL, description, and order for this lecture.
             </p>
           </div>
 
@@ -196,43 +187,6 @@ export default function EditLecturePage() {
 
           {!loading && !unauthorized && !notFound && (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Course Dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-slate-200 mb-2">
-                  Course *
-                </label>
-                {coursesLoading ? (
-                  <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400 animate-pulse">
-                    Loading courses...
-                  </div>
-                ) : courses.length === 0 ? (
-                  <div className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-slate-400">
-                    No courses available.{" "}
-                    <Link href="/teacher/courses/new" className="text-blue-400 hover:underline">
-                      Create a course first
-                    </Link>
-                    .
-                  </div>
-                ) : (
-                  <select
-                    id="edit-lecture-course-dropdown"
-                    required
-                    value={courseId}
-                    onChange={(e) => setCourseId(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="" className="bg-slate-900">
-                      Select a course
-                    </option>
-                    {courses.map((course) => (
-                      <option key={course.id} value={course.id} className="bg-slate-900">
-                        {course.title}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-slate-200 mb-2">
@@ -244,10 +198,20 @@ export default function EditLecturePage() {
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Free Body Diagrams & Friction Problems"
+                  placeholder="e.g. Structure of Atom 17 : Filling of Atomic Orbitals"
                   className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
+
+              {/* Lecture Thumbnail Upload */}
+              <ImageUploadInput
+                label="Lecture Custom Thumbnail Image"
+                value={thumbnailUrl}
+                onChange={setThumbnailUrl}
+                placeholder="https://example.com/lecture-thumbnail.jpg"
+                helperText="Upload a custom thumbnail for this lecture. If left empty, YouTube auto-thumbnail will be used."
+                folder="lecture-thumbnails"
+              />
 
               {/* YouTube URL */}
               <div>
@@ -265,20 +229,37 @@ export default function EditLecturePage() {
                 />
               </div>
 
-              {/* Order Number */}
-              <div>
-                <label className="block text-sm font-medium text-slate-200 mb-2">
-                  Order Number (Lecture position) *
-                </label>
-                <input
-                  id="edit-lecture-order-input"
-                  type="number"
-                  min={1}
-                  required
-                  value={orderNumber}
-                  onChange={(e) => setOrderNumber(Number(e.target.value))}
-                  className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              {/* Order Number & Duration */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                    Order Number (Lecture position) *
+                  </label>
+                  <input
+                    id="edit-lecture-order-input"
+                    type="number"
+                    min={1}
+                    required
+                    value={orderNumber}
+                    onChange={(e) => setOrderNumber(Number(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-200 mb-2">
+                    Duration (minutes) *
+                  </label>
+                  <input
+                    id="edit-lecture-duration-input"
+                    type="number"
+                    min={1}
+                    required
+                    value={durationMins}
+                    onChange={(e) => setDurationMins(Number(e.target.value))}
+                    className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
               </div>
 
               {/* Description */}
