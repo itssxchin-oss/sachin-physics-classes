@@ -5,15 +5,17 @@ import { createClient } from "@/lib/supabase/server";
 import StudentSidebarLayout from "@/components/student/StudentSidebarLayout";
 import EnrollBatchButton from "../EnrollBatchButton";
 
-// Subject card colour palette — cycles through these
-const SUBJECT_COLORS = [
-  { bg: "from-blue-600/30 to-blue-900/20", border: "border-blue-500/30", text: "text-blue-300", icon: "⚡" },
-  { bg: "from-emerald-600/30 to-emerald-900/20", border: "border-emerald-500/30", text: "text-emerald-300", icon: "🌿" },
-  { bg: "from-purple-600/30 to-purple-900/20", border: "border-purple-500/30", text: "text-purple-300", icon: "🔮" },
-  { bg: "from-amber-600/30 to-amber-900/20", border: "border-amber-500/30", text: "text-amber-300", icon: "⚗️" },
-  { bg: "from-pink-600/30 to-pink-900/20", border: "border-pink-500/30", text: "text-pink-300", icon: "🌸" },
-  { bg: "from-cyan-600/30 to-cyan-900/20", border: "border-cyan-500/30", text: "text-cyan-300", icon: "🌊" },
-];
+// Subject icon helper based on subject name
+const getSubjectIcon = (title: string, index: number) => {
+  const lower = title.toLowerCase();
+  if (lower.includes("physics")) return "⚛️";
+  if (lower.includes("chem") || lower.includes("organic") || lower.includes("inorganic")) return "🧪";
+  if (lower.includes("math") || lower.includes("maths")) return "📐";
+  if (lower.includes("bio") || lower.includes("botany") || lower.includes("zoology")) return "🧬";
+  if (lower.includes("notice") || lower.includes("announcement") || lower.includes("dpp")) return "📢";
+  const defaultIcons = ["📚", "⚡", "🔮", "🌊", "⚗️", "🌸"];
+  return defaultIcons[index % defaultIcons.length];
+};
 
 interface BatchPageProps {
   params: { id: string };
@@ -157,7 +159,7 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
                       ✓ Enrolled
                     </span>
                     <span className="text-slate-400 text-sm">
-                      Select a subject below to start learning
+                      Select a subject below to view chapters
                     </span>
                   </div>
                 ) : (
@@ -197,60 +199,47 @@ export default async function BatchDetailPage({ params }: BatchPageProps) {
             </p>
           </div>
         ) : (
-          <>
-            <div className="flex items-center gap-3 mb-5">
-              <h2 className="text-xl font-bold text-white">Subjects</h2>
-              <span className="text-xs text-slate-400 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
-                {subjects.length} total
+          /* PW Style Compact Horizontal Subjects Container (Matching Screenshot) */
+          <div className="glass rounded-3xl border border-white/10 p-6 sm:p-8 fade-up space-y-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                Subjects
+              </h2>
+              <span className="text-xs font-bold text-slate-400 bg-white/5 border border-white/10 px-3 py-1.5 rounded-full">
+                {subjects.length} {subjects.length === 1 ? "Subject" : "Subjects"}
               </span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5">
               {subjects.map((subject, idx) => {
-                const palette = SUBJECT_COLORS[idx % SUBJECT_COLORS.length];
+                const icon = getSubjectIcon(subject.title, idx);
                 const chapterCount = chapterCountBySubject[subject.id] || 0;
 
                 return (
                   <Link
                     key={subject.id}
                     href={`/batches/${batchId}/subjects/${subject.id}`}
-                    className={`group glass rounded-2xl border p-5 flex flex-col gap-3 transition-all hover:scale-[1.02] hover:shadow-xl ${palette.border}`}
+                    className="group rounded-2xl bg-[#12151e] hover:bg-[#1a1e2b] border border-slate-800 hover:border-blue-500/60 p-4 flex items-center gap-3.5 transition-all duration-200 shadow-sm hover:shadow-lg hover:shadow-blue-950/40"
                   >
-                    {/* Icon Area */}
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${palette.bg} border ${palette.border} flex items-center justify-center text-2xl`}>
-                      {palette.icon}
+                    {/* Circular Icon Badge */}
+                    <div className="w-10 h-10 rounded-full bg-slate-900 border border-white/15 flex items-center justify-center text-lg flex-shrink-0 group-hover:scale-110 transition-transform">
+                      {icon}
                     </div>
 
-                    {/* Subject info */}
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-[11px] font-bold uppercase tracking-wider ${palette.text}`}>
-                          Subject #{subject.order_number}
-                        </span>
-                      </div>
-                      <h3 className="font-bold text-white text-base leading-snug group-hover:text-white transition-colors">
+                    {/* Subject Info */}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-white text-sm sm:text-base leading-snug truncate group-hover:text-blue-300 transition-colors">
                         {subject.title}
                       </h3>
-                      {subject.description && (
-                        <p className="text-slate-400 text-xs mt-1 line-clamp-2">
-                          {subject.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Footer meta */}
-                    <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                      <span className="text-xs text-slate-400">
-                        📂 {chapterCount} chapter{chapterCount !== 1 ? "s" : ""}
-                      </span>
-                      <span className={`text-xs font-semibold ${palette.text} flex items-center gap-1`}>
-                        Start <span>→</span>
-                      </span>
+                      <p className="text-xs font-medium text-slate-400 mt-0.5">
+                        {chapterCount} {chapterCount === 1 ? "Chapter" : "Chapters"}
+                      </p>
                     </div>
                   </Link>
                 );
               })}
             </div>
-          </>
+          </div>
         )}
       </div>
     </StudentSidebarLayout>
