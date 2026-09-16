@@ -69,11 +69,13 @@ export default function LoginPage() {
       }
 
       if (data.user) {
-        // Force Next.js to revalidate the server-side session cookie
-        // before querying the profile and deciding where to redirect.
-        // Without this, middleware may still see the old (unauthenticated)
-        // cookie and fall back to the wrong role.
+        // router.refresh() is synchronous-fire (returns void), so we give
+        // Next.js a short window to propagate the refreshed session cookie
+        // to the server before we hit a protected route.  Without this
+        // pause the middleware may still see the old unauthenticated cookie
+        // on the very first navigation and fall back to /login.
         router.refresh();
+        await new Promise((resolve) => setTimeout(resolve, 200));
         await handleRoleRedirect(data.user.id);
       }
     } catch (err: any) {

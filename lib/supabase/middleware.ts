@@ -30,7 +30,12 @@ function getValidatedSupabaseCredentials() {
 }
 
 export async function updateSession(request: NextRequest) {
+  // Start with a base response that forwards the request.
+  // IMPORTANT: This single object is mutated by setAll below; do NOT
+  // reassign it inside the cookie callbacks or the written cookies will
+  // be lost on the next iteration.
   let supabaseResponse = NextResponse.next({ request });
+
   const { supabaseUrl, supabaseAnonKey } = getValidatedSupabaseCredentials();
 
   try {
@@ -43,10 +48,17 @@ export async function updateSession(request: NextRequest) {
             return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
+            // 1. Write cookies onto the forwarded request so downstream
+            //    Server Components see them in the same request cycle.
             cookiesToSet.forEach(({ name, value }) =>
               request.cookies.set(name, value)
             );
+            // 2. Re-create the response with the mutated request so the
+            //    updated cookies are included in its cookie jar.
             supabaseResponse = NextResponse.next({ request });
+            // 3. Also write them explicitly onto the response so the
+            //    browser receives Set-Cookie headers and persists the
+            //    refreshed session.
             cookiesToSet.forEach(({ name, value, options }) =>
               supabaseResponse.cookies.set(name, value, options)
             );
@@ -55,7 +67,9 @@ export async function updateSession(request: NextRequest) {
       }
     );
 
-    // Refresh the auth session so the cookie is kept alive.
+    // IMPORTANT: always call getUser() (not getSession()) so that the JWT
+    // is validated server-side and the session cookie is refreshed on
+    // every request, preventing premature expiry.
     const {
       data: { user },
     } = await supabase.auth.getUser();
