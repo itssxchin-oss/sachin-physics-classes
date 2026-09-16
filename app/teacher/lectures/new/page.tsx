@@ -175,18 +175,34 @@ export default function NewLecturePage() {
         return;
       }
 
-      // Insert into lectures table using chapter_id
-      const { error: insertError } = await supabase
+      // Build payload
+      const payload: Record<string, any> = {
+        chapter_id: selectedChapterId,
+        title: title.trim(),
+        youtube_url: youtubeUrl.trim(),
+        description: description.trim(),
+        order_number: Number(orderNumber),
+        duration_mins: Number(durationMins),
+      };
+
+      if (thumbnailUrl.trim()) {
+        payload.thumbnail_url = thumbnailUrl.trim();
+      }
+
+      // 1. Try insert with thumbnail_url
+      let { error: insertError } = await supabase
         .from("lectures")
-        .insert({
-          chapter_id: selectedChapterId,
-          title: title.trim(),
-          youtube_url: youtubeUrl.trim(),
-          thumbnail_url: thumbnailUrl.trim() || null,
-          description: description.trim(),
-          order_number: Number(orderNumber),
-          duration_mins: Number(durationMins),
-        });
+        .insert(payload);
+
+      // 2. Smart Fallback if column missing in Supabase PostgREST cache
+      if (insertError && insertError.message.includes("thumbnail_url")) {
+        delete payload.thumbnail_url;
+        const { error: retryError } = await supabase
+          .from("lectures")
+          .insert(payload);
+
+        insertError = retryError;
+      }
 
       if (insertError) {
         setError(`Failed to add lecture: ${insertError.message}`);

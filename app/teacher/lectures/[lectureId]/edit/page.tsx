@@ -108,18 +108,35 @@ export default function EditLecturePage() {
         return;
       }
 
-      // UPDATE the existing row
-      const { error: updateError } = await supabase
+      // Build update payload
+      const payload: Record<string, any> = {
+        title: title.trim(),
+        youtube_url: youtubeUrl.trim(),
+        description: description.trim(),
+        order_number: Number(orderNumber),
+        duration_mins: Number(durationMins),
+      };
+
+      if (thumbnailUrl.trim()) {
+        payload.thumbnail_url = thumbnailUrl.trim();
+      }
+
+      // 1. Attempt update with thumbnail_url
+      let { error: updateError } = await supabase
         .from("lectures")
-        .update({
-          title: title.trim(),
-          youtube_url: youtubeUrl.trim(),
-          thumbnail_url: thumbnailUrl.trim() || null,
-          description: description.trim(),
-          order_number: Number(orderNumber),
-          duration_mins: Number(durationMins),
-        })
+        .update(payload)
         .eq("id", lectureId);
+
+      // 2. Smart Fallback: If DB schema doesn't have thumbnail_url column yet, retry without thumbnail_url
+      if (updateError && updateError.message.includes("thumbnail_url")) {
+        delete payload.thumbnail_url;
+        const { error: retryError } = await supabase
+          .from("lectures")
+          .update(payload)
+          .eq("id", lectureId);
+
+        updateError = retryError;
+      }
 
       if (updateError) {
         setError(`Failed to update lecture: ${updateError.message}`);
