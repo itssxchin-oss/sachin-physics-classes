@@ -4,17 +4,11 @@ import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { Lecture, Progress, LectureMaterial } from "@/lib/database.types";
+import type { Lecture, Progress } from "@/lib/database.types";
 import {
-  ArrowLeft,
   CheckCircle2,
-  FileText,
-  Download,
-  Paperclip,
   MoreVertical,
   Share2,
-  Clock,
-  BookOpen,
   Sparkles,
   Maximize,
   ChevronLeft,
@@ -54,8 +48,6 @@ export default function LecturePage({ params }: LecturePageProps) {
   const [chapterTitle, setChapterTitle] = useState<string | null>(null);
   const [subjectId, setSubjectId] = useState<string | null>(null);
   const [batchId, setBatchId] = useState<string | null>(null);
-  const [materials, setMaterials] = useState<LectureMaterial[]>([]);
-  const [materialsLoading, setMaterialsLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [isCompleted, setIsCompleted] = useState(false);
   const [updatingProgress, setUpdatingProgress] = useState(false);
@@ -115,16 +107,7 @@ export default function LecturePage({ params }: LecturePageProps) {
           setLecture(null);
         }
 
-        // 4. Fetch study materials — keyed only on lectureId
-        const { data: materialsData } = await supabase
-          .from("lecture_materials")
-          .select("*")
-          .eq("lecture_id", lectureId)
-          .order("created_at", { ascending: false });
-
-        setMaterials((materialsData as LectureMaterial[]) ?? []);
-
-        // 5. Check completion status
+        // 4. Check completion status
         if (currentUserId) {
           const { data: progressData } = await supabase
             .from("progress")
@@ -140,7 +123,6 @@ export default function LecturePage({ params }: LecturePageProps) {
         console.error("Error loading lecture:", err);
       } finally {
         setLoading(false);
-        setMaterialsLoading(false);
       }
     }
 
@@ -328,147 +310,12 @@ export default function LecturePage({ params }: LecturePageProps) {
           )}
         </div>
 
-        {/* Below-video metadata + materials */}
-        {lecture && (
-          <div className="px-4 sm:px-0 space-y-8 fade-up pb-16">
-
-            {/* Lecture info card */}
-            <div className="glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-6">
-              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-white/10">
-                <div className="space-y-2 flex-1">
-                  <div className="flex items-center gap-3 flex-wrap">
-                    {chapterTitle && (
-                      <span className="bg-cyan-500/10 text-cyan-300 text-xs font-bold px-3 py-1 rounded-full border border-cyan-500/20">
-                        {chapterTitle}
-                      </span>
-                    )}
-                    <span className="bg-blue-500/10 text-blue-400 text-xs font-bold px-3 py-1 rounded-full border border-blue-500/20">
-                      Lecture #{lecture.order_number || 1}
-                    </span>
-                    <span className="text-xs text-slate-400 font-medium flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      {lecture.duration_mins || 45} mins
-                    </span>
-                  </div>
-                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                    {lecture.title}
-                  </h1>
-                </div>
-
-                <div className="flex-shrink-0">
-                  <button
-                    onClick={handleToggleComplete}
-                    disabled={updatingProgress}
-                    className={`px-6 py-3.5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2.5 transition-all duration-300 shadow-lg ${
-                      isCompleted
-                        ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-950/40"
-                        : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white shadow-blue-950/50"
-                    } disabled:opacity-50`}
-                  >
-                    {updatingProgress ? (
-                      <span className="animate-pulse">Saving status...</span>
-                    ) : isCompleted ? (
-                      <>
-                        <CheckCircle2 className="w-5 h-5" />
-                        <span>Lecture Completed</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-5 h-5 text-white/80" />
-                        <span>Mark as Complete</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {statusMessage && (
-                <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2 fade-up">
-                  <Sparkles className="w-4 h-4 text-emerald-400" />
-                  <span>{statusMessage}</span>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <h3 className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">About This Lecture</h3>
-                <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                  {lecture.description || "No detailed description provided for this lecture video."}
-                </p>
-              </div>
-            </div>
-
-            {/* Study Materials card */}
-            <div className="glass p-6 sm:p-8 rounded-3xl border border-white/10 shadow-xl space-y-6">
-              <div className="flex items-center justify-between pb-4 border-b border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
-                    <Paperclip className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg sm:text-xl font-extrabold text-white">Study Materials</h2>
-                    <p className="text-slate-400 text-xs">PDF notes, practice sheets, and formula guides</p>
-                  </div>
-                </div>
-                {materials.length > 0 && (
-                  <span className="text-xs bg-emerald-500/15 text-emerald-300 font-bold px-3 py-1 rounded-full border border-emerald-500/30">
-                    {materials.length} {materials.length === 1 ? "File" : "Files"}
-                  </span>
-                )}
-              </div>
-
-              {materialsLoading ? (
-                <div className="py-8 text-center text-slate-400 text-xs flex items-center justify-center gap-2">
-                  <div className="animate-spin w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full" />
-                  <span>Loading attached documents...</span>
-                </div>
-              ) : materials.length === 0 ? (
-                <div className="py-8 px-4 text-center text-slate-400 text-xs rounded-2xl border border-white/5 bg-white/[0.01]">
-                  No study materials attached to this lecture yet.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {materials.map((mat) => (
-                    <div
-                      key={mat.id}
-                      className="p-4 rounded-2xl glass border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] hover:border-emerald-500/40 flex items-center justify-between gap-4 transition-all duration-300"
-                    >
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400 flex-shrink-0">
-                          <FileText className="w-5 h-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="text-sm font-bold text-white truncate" title={mat.title}>
-                            {mat.title}
-                          </h3>
-                          <span className="text-[10px] font-bold text-red-400 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/20 uppercase inline-block mt-0.5">
-                            PDF Document
-                          </span>
-                        </div>
-                      </div>
-                      <a
-                        href={mat.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md flex-shrink-0"
-                      >
-                        <span>Download</span>
-                        <Download className="w-3.5 h-3.5" />
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Bottom back link */}
-            <div className="flex items-center pt-2">
-              <Link
-                href={backHref}
-                className="px-5 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 text-xs font-bold transition-all flex items-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Subject</span>
-              </Link>
+        {/* Status message only */}
+        {statusMessage && (
+          <div className="px-4 sm:px-0 mt-4 fade-up">
+            <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <span>{statusMessage}</span>
             </div>
           </div>
         )}
