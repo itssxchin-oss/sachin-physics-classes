@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,8 @@ import {
   Clock,
   BookOpen,
   Lock,
+  RotateCw,
+  Minimize,
 } from "lucide-react";
 
 interface LecturePageProps {
@@ -32,7 +34,7 @@ function getYouTubeEmbedUrl(url: string | null | undefined): string {
       videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
     }
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1&controls=1&cc_load_policy=1&enablejsapi=1`;
+      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&iv_load_policy=3&controls=1&autoplay=1&enablejsapi=1`;
     }
   } catch {
     // fallback
@@ -69,8 +71,108 @@ export default function LecturePage({ params }: LecturePageProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const videoContainerRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
+
+  const toggleFullscreenRotate = async () => {
+    const el = videoContainerRef.current;
+    if (!el) return;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const doc = document as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const elem = el as any;
+
+    const isCurrentlyFS = !!(
+      doc.fullscreenElement ||
+      doc.webkitFullscreenElement ||
+      doc.mozFullScreenElement ||
+      doc.msFullscreenElement
+    );
+
+    if (!isCurrentlyFS) {
+      if (elem.requestFullscreen) {
+        await elem.requestFullscreen().catch(() => {});
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      } else if (elem.mozRequestFullScreen) {
+        elem.mozRequestFullScreen();
+      } else if (elem.msRequestFullscreen) {
+        elem.msRequestFullscreen();
+      }
+
+      if (typeof window !== "undefined" && window.screen && window.screen.orientation) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const orientation = window.screen.orientation as any;
+          if (orientation.lock) {
+            await orientation.lock("landscape").catch(() => {});
+          }
+        } catch {
+          // Ignore
+        }
+      }
+      setIsFullscreen(true);
+    } else {
+      if (doc.exitFullscreen) {
+        await doc.exitFullscreen().catch(() => {});
+      } else if (doc.webkitExitFullscreen) {
+        doc.webkitExitFullscreen();
+      } else if (doc.mozCancelFullScreen) {
+        doc.mozCancelFullScreen();
+      } else if (doc.msExitFullscreen) {
+        doc.msExitFullscreen();
+      }
+
+      if (typeof window !== "undefined" && window.screen && window.screen.orientation) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const orientation = window.screen.orientation as any;
+          if (orientation.unlock) {
+            orientation.unlock();
+          }
+        } catch {
+          // Ignore
+        }
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleFSChange = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const doc = document as any;
+      const isFS = !!(
+        doc.fullscreenElement ||
+        doc.webkitFullscreenElement ||
+        doc.mozFullScreenElement ||
+        doc.msFullscreenElement
+      );
+      setIsFullscreen(isFS);
+
+      if (!isFS && typeof window !== "undefined" && window.screen?.orientation) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (window.screen.orientation as any).unlock?.();
+        } catch { /* */ }
+      }
+    };
+
+    document.addEventListener("fullscreenchange", handleFSChange);
+    document.addEventListener("webkitfullscreenchange", handleFSChange);
+    document.addEventListener("mozfullscreenchange", handleFSChange);
+    document.addEventListener("MSFullscreenChange", handleFSChange);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFSChange);
+      document.removeEventListener("webkitfullscreenchange", handleFSChange);
+      document.removeEventListener("mozfullscreenchange", handleFSChange);
+      document.removeEventListener("MSFullscreenChange", handleFSChange);
+    };
+  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -269,14 +371,33 @@ export default function LecturePage({ params }: LecturePageProps) {
                 <p className="text-sm text-slate-400 font-medium">Loading video...</p>
               </div>
             ) : lecture && embedUrl ? (
-              <div className="relative aspect-video w-full bg-black">
+              <div ref={videoContainerRef} className="relative aspect-video w-full bg-black group overflow-hidden">
                 <iframe
                   src={embedUrl}
                   title={lecture.title || "Lecture Video"}
                   className="absolute inset-0 w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen; orientation-lock"
                   allowFullScreen
                 />
+                {/* Mobile Rotate / Fullscreen Button */}
+                <button
+                  onClick={toggleFullscreenRotate}
+                  type="button"
+                  className="absolute top-3 right-3 z-30 px-3 py-1.5 rounded-xl bg-black/80 hover:bg-black backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg active:scale-95 cursor-pointer"
+                  title="Rotate Fullscreen"
+                >
+                  {isFullscreen ? (
+                    <>
+                      <Minimize className="w-3.5 h-3.5 text-orange-400" />
+                      <span>Exit Fullscreen</span>
+                    </>
+                  ) : (
+                    <>
+                      <RotateCw className="w-3.5 h-3.5 text-orange-400" />
+                      <span>Rotate Fullscreen</span>
+                    </>
+                  )}
+                </button>
               </div>
             ) : (
               <div className="aspect-video w-full flex flex-col items-center justify-center bg-[#111113] p-8 text-center">
