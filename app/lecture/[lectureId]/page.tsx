@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -14,9 +14,6 @@ import {
   Clock,
   BookOpen,
   Lock,
-  Maximize,
-  RotateCw,
-  Minimize,
 } from "lucide-react";
 
 interface LecturePageProps {
@@ -35,7 +32,7 @@ function getYouTubeEmbedUrl(url: string | null | undefined): string {
       videoId = url.split("youtu.be/")[1]?.split("?")[0] || "";
     }
     if (videoId) {
-      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&autoplay=1`;
+      return `https://www.youtube.com/embed/${videoId}?rel=0&autoplay=1&controls=1&cc_load_policy=1&enablejsapi=1`;
     }
   } catch {
     // fallback
@@ -72,108 +69,8 @@ export default function LecturePage({ params }: LecturePageProps) {
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [copiedLink, setCopiedLink] = useState(false);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const videoContainerRef = useRef<HTMLDivElement>(null);
 
   const supabase = createClient();
-
-  const toggleFullscreenRotate = async () => {
-    const el = videoContainerRef.current;
-    if (!el) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const doc = document as any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const elem = el as any;
-
-    const isCurrentlyFS = !!(
-      doc.fullscreenElement ||
-      doc.webkitFullscreenElement ||
-      doc.mozFullScreenElement ||
-      doc.msFullscreenElement
-    );
-
-    if (!isCurrentlyFS) {
-      if (elem.requestFullscreen) {
-        await elem.requestFullscreen().catch(() => {});
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      } else if (elem.mozRequestFullScreen) {
-        elem.mozRequestFullScreen();
-      } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen();
-      }
-
-      if (typeof window !== "undefined" && window.screen && window.screen.orientation) {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const orientation = window.screen.orientation as any;
-          if (orientation.lock) {
-            await orientation.lock("landscape").catch(() => {});
-          }
-        } catch {
-          // Ignore orientation lock fail on desktop/unsupported browser
-        }
-      }
-      setIsFullscreen(true);
-    } else {
-      if (doc.exitFullscreen) {
-        await doc.exitFullscreen().catch(() => {});
-      } else if (doc.webkitExitFullscreen) {
-        doc.webkitExitFullscreen();
-      } else if (doc.mozCancelFullScreen) {
-        doc.mozCancelFullScreen();
-      } else if (doc.msExitFullscreen) {
-        doc.msExitFullscreen();
-      }
-
-      if (typeof window !== "undefined" && window.screen && window.screen.orientation) {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const orientation = window.screen.orientation as any;
-          if (orientation.unlock) {
-            orientation.unlock();
-          }
-        } catch {
-          // Ignore
-        }
-      }
-      setIsFullscreen(false);
-    }
-  };
-
-  useEffect(() => {
-    const handleFSChange = () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const doc = document as any;
-      const isFS = !!(
-        doc.fullscreenElement ||
-        doc.webkitFullscreenElement ||
-        doc.mozFullScreenElement ||
-        doc.msFullscreenElement
-      );
-      setIsFullscreen(isFS);
-
-      if (!isFS && typeof window !== "undefined" && window.screen?.orientation) {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (window.screen.orientation as any).unlock?.();
-        } catch { /* */ }
-      }
-    };
-
-    document.addEventListener("fullscreenchange", handleFSChange);
-    document.addEventListener("webkitfullscreenchange", handleFSChange);
-    document.addEventListener("mozfullscreenchange", handleFSChange);
-    document.addEventListener("MSFullscreenChange", handleFSChange);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", handleFSChange);
-      document.removeEventListener("webkitfullscreenchange", handleFSChange);
-      document.removeEventListener("mozfullscreenchange", handleFSChange);
-      document.removeEventListener("MSFullscreenChange", handleFSChange);
-    };
-  }, []);
 
   useEffect(() => {
     async function loadData() {
@@ -372,33 +269,14 @@ export default function LecturePage({ params }: LecturePageProps) {
                 <p className="text-sm text-slate-400 font-medium">Loading video...</p>
               </div>
             ) : lecture && embedUrl ? (
-              <div ref={videoContainerRef} className="relative aspect-video w-full bg-black group">
+              <div className="relative aspect-video w-full bg-black">
                 <iframe
                   src={embedUrl}
                   title={lecture.title || "Lecture Video"}
                   className="absolute inset-0 w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen; orientation-lock"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share; fullscreen"
                   allowFullScreen
                 />
-                {/* Mobile Rotate / Fullscreen quick button */}
-                <button
-                  onClick={toggleFullscreenRotate}
-                  type="button"
-                  className="absolute top-3 right-3 z-20 px-3 py-1.5 rounded-lg bg-black/80 hover:bg-black backdrop-blur-md border border-white/20 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-lg active:scale-95"
-                  title="Rotate to Landscape / Fullscreen"
-                >
-                  {isFullscreen ? (
-                    <>
-                      <Minimize className="w-3.5 h-3.5 text-orange-400" />
-                      <span className="hidden sm:inline">Exit</span>
-                    </>
-                  ) : (
-                    <>
-                      <RotateCw className="w-3.5 h-3.5 text-orange-400 animate-spin-slow" />
-                      <span>Rotate Fullscreen</span>
-                    </>
-                  )}
-                </button>
               </div>
             ) : (
               <div className="aspect-video w-full flex flex-col items-center justify-center bg-[#111113] p-8 text-center">
@@ -415,39 +293,27 @@ export default function LecturePage({ params }: LecturePageProps) {
           {/* Below video: lecture info */}
           {!loading && lecture && (
             <div className="px-4 sm:px-6 py-5 border-b border-white/[0.07] space-y-3">
-              {/* Tags row & rotate action button */}
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div className="flex items-center gap-2 flex-wrap">
-                  {chapterTitle && (
-                    <span className="text-[11px] font-bold text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-md border border-orange-500/20 uppercase tracking-wider">
-                      {chapterTitle}
-                    </span>
-                  )}
-                  <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20">
-                    Lecture {lecture.order_number || 1}
+              {/* Tags row */}
+              <div className="flex items-center gap-2 flex-wrap">
+                {chapterTitle && (
+                  <span className="text-[11px] font-bold text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-md border border-orange-500/20 uppercase tracking-wider">
+                    {chapterTitle}
                   </span>
-                  {lecture.duration_mins && (
-                    <span className="text-[11px] text-slate-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {lecture.duration_mins} min
-                    </span>
-                  )}
-                  {isCompleted && (
-                    <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" /> Completed
-                    </span>
-                  )}
-                </div>
-
-                {/* Secondary rotate screen button */}
-                <button
-                  onClick={toggleFullscreenRotate}
-                  type="button"
-                  className="px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
-                >
-                  <RotateCw className="w-3.5 h-3.5 text-orange-400" />
-                  <span>{isFullscreen ? "Exit Fullscreen" : "Rotate Screen"}</span>
-                </button>
+                )}
+                <span className="text-[11px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20">
+                  Lecture {lecture.order_number || 1}
+                </span>
+                {lecture.duration_mins && (
+                  <span className="text-[11px] text-slate-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {lecture.duration_mins} min
+                  </span>
+                )}
+                {isCompleted && (
+                  <span className="text-[11px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Completed
+                  </span>
+                )}
               </div>
 
               {/* Title */}
